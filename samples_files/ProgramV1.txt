@@ -1,0 +1,43 @@
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Digests; // Add this line
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Prng;
+using Org.BouncyCastle.Security;
+using System;
+
+public class RandomNumberGenerator
+{
+    public byte[] GenerateRandomNumber(byte[] key, byte[] data)
+    {
+        // Create HMAC based on SHA256
+        IMac hmac = MacUtilities.GetMac("HMACSHA256");
+        hmac.Init(new KeyParameter(key));
+
+        // Compute HMAC for the input data
+        hmac.BlockUpdate(data, 0, data.Length);
+        byte[] hmacResult = new byte[hmac.GetMacSize()];
+        hmac.DoFinal(hmacResult, 0);
+
+        // Use the HMAC result as the seed for the random number generator
+        DigestRandomGenerator generator = new DigestRandomGenerator(new Sha256Digest());
+        generator.AddSeedMaterial(hmacResult);
+
+        // Generate a random number
+        byte[] randomNumber = new byte[32]; // 256 bits in length
+        generator.NextBytes(randomNumber);
+
+        return randomNumber;
+    }
+
+    // Example usage
+    public static void Main()
+    {
+        byte[] key = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 };
+        byte[] data = new byte[] { 0x10, 0x20, 0x30 };
+
+        RandomNumberGenerator rng = new RandomNumberGenerator();
+        byte[] randomNum = rng.GenerateRandomNumber(key, data);
+
+        Console.WriteLine("Random number generated: 0x" + BitConverter.ToString(randomNum).Replace("-", ""));
+    }
+}
