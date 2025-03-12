@@ -1,0 +1,36 @@
+using System;
+using System.Text;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Macs;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Crypto.Parameters;
+
+namespace RandomNumberGenerator
+{
+    class Program
+    {
+        static void Main()
+        {
+            // Create a random key for HMAC
+            byte[] key = new byte[32];
+            SecureRandom random = new SecureRandom();
+            random.NextBytes(key);
+
+            // Initialize an HMAC with SHA-256
+            HMac hmac = new HMac(new Sha256Digest());
+            hmac.Init(new KeyParameter(key));
+
+            // Generate a random number based on HMAC
+            byte[] message = Encoding.UTF8.GetBytes("random_number_seed");
+            hmac.BlockUpdate(message, 0, message.Length);
+            byte[] randomNumber = new byte[hmac.GetMacSize()];
+            hmac.DoFinal(randomNumber, 0);
+
+            // Convert the random number to an integer
+            int randomInt = BitConverter.ToInt32(randomNumber, 0);
+
+            Console.WriteLine($"Random Number: {randomInt}");
+        }
+    }
+}
